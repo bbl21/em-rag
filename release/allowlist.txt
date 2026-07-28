@@ -12,6 +12,7 @@ docs/public-rag-mvp-spec.md
 docs/product-release-policy-2026-07-21.md
 demo/
 kb_corpus_build/README.md
+kb_corpus_build/eval/retrieval_quality_v2/judgment_rubric.md
 kb_corpus_build/eval/retrieval_quality_v2/reports/judgment_release_status.json
 kb_corpus_build/requirements-vector.txt
 kb_corpus_build/requirements.txt
