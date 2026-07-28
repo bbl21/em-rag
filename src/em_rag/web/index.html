@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EM RAG</title>
+  <style>
+    :root { color-scheme: light; --ink:#152238; --muted:#607086; --paper:#f4f7fb; --card:#fff; --accent:#1261a0; --warn:#9a5a00; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:linear-gradient(145deg,#eaf3fb,#f8f6f0); color:var(--ink); font:16px/1.55 system-ui,sans-serif; min-height:100vh; }
+    main { width:min(980px,calc(100% - 32px)); margin:0 auto; padding:48px 0 72px; }
+    header { margin-bottom:28px; }
+    h1 { margin:0; font:700 clamp(2rem,5vw,3.8rem)/1.05 Georgia,serif; letter-spacing:-.03em; }
+    header p { color:var(--muted); max-width:680px; }
+    form,.panel { background:rgba(255,255,255,.9); border:1px solid #dbe4ee; border-radius:18px; box-shadow:0 14px 36px rgba(23,54,86,.09); padding:20px; }
+    textarea { width:100%; min-height:112px; resize:vertical; border:1px solid #b9c8d8; border-radius:12px; padding:14px; font:inherit; }
+    .row { display:flex; gap:12px; align-items:center; margin-top:12px; flex-wrap:wrap; }
+    button { border:0; border-radius:999px; background:var(--accent); color:white; padding:11px 20px; font-weight:700; cursor:pointer; }
+    button:disabled { opacity:.55; cursor:wait; }
+    select,input { border:1px solid #b9c8d8; border-radius:9px; padding:9px; background:white; }
+    #status { color:var(--muted); }
+    #output { margin-top:22px; display:grid; gap:16px; }
+    #runtime { margin-top:16px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .badge { border:1px solid #c9d6e3; border-radius:999px; padding:5px 10px; font-size:.86rem; background:#f7fafc; }
+    .badge.ok { border-color:#83b99a; background:#eaf7ef; color:#25603b; }
+    .badge.bad { border-color:#d3a26b; background:#fff4db; color:#7b4700; }
+    .warning { color:var(--warn); background:#fff4db; border-radius:10px; padding:10px 12px; }
+    details { background:var(--card); border:1px solid #dbe4ee; border-radius:14px; padding:14px 16px; }
+    summary { cursor:pointer; font-weight:700; }
+    .citation { color:var(--accent); font-size:.92rem; margin:.4rem 0; }
+    .scores { color:var(--muted); font-size:.86rem; margin:.35rem 0; }
+    pre { white-space:pre-wrap; font:14px/1.55 ui-monospace,monospace; color:#26364d; }
+    footer { color:var(--muted); margin-top:24px; font-size:.9rem; }
+  </style>
+</head>
+<body>
+<main>
+  <header><h1>EM RAG</h1><p>Local evidence retrieval for electromagnetics, antennas, microwave circuits, and short-range propagation. Evidence is untrusted data and every result keeps its source citation.</p></header>
+  <form id="search">
+    <label for="query"><strong>Ask an English technical question</strong></label>
+    <textarea id="query" required maxlength="4096" placeholder="What is the frequency range of ITU-R P.1411?"></textarea>
+    <div class="row">
+      <button id="submit" type="submit">Retrieve evidence</button>
+      <label>Top K <input id="topk" type="number" min="1" max="50" value="8"></label>
+      <label>Mode <select id="mode"><option value="hybrid">Hybrid (required vector)</option><option value="bm25_structured">BM25 + structured fallback</option></select></label>
+      <span id="status">Checking readiness…</span>
+    </div>
+  </form>
+  <section id="runtime" class="panel" aria-live="polite">Loading runtime status…</section>
+  <section id="output" aria-live="polite"></section>
+  <footer>Current release exposes known calibration risk in response warnings; it does not claim final retrieval-quality approval.</footer>
+</main>
+<script>
+const form=document.querySelector('#search'), out=document.querySelector('#output'), statusEl=document.querySelector('#status'), runtime=document.querySelector('#runtime'), submit=document.querySelector('#submit');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const badge=(label,value,ok)=>`<span class="badge ${ok?'ok':'bad'}"><strong>${esc(label)}</strong> ${esc(value)}</span>`;
+async function readiness(){try{const [rr,sr]=await Promise.all([fetch('/health/ready'),fetch('/v1/system')]);const ready=await rr.json(), system=await sr.json();statusEl.textContent=rr.ok?`Ready · ${ready.document_count} chunks`:'Artifact not ready';runtime.innerHTML=badge('Vector',ready.vector_runtime_status||'unknown',ready.vector_runtime_status==='ok')+badge('BM25',ready.bm25_runtime_status||'unknown',ready.bm25_runtime_status==='ok')+badge('Structured',ready.structured_runtime_status||'unknown',ready.structured_runtime_status==='ok')+badge('LLM',system.answer_provider_configured?'configured':'not configured',!!system.answer_provider_configured)+badge('Quality gate',system.artifact?.quality_status||'needs_validation',['pass','release_eligible'].includes(system.artifact?.quality_status));}catch{statusEl.textContent='Service unavailable';runtime.innerHTML=badge('Runtime','unavailable',false);}}
+form.addEventListener('submit',async e=>{e.preventDefault();submit.disabled=true;statusEl.textContent='Retrieving…';out.innerHTML='';try{const r=await fetch('/v1/retrieve',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({query:document.querySelector('#query').value,top_k:Number(document.querySelector('#topk').value),retrieval_mode:document.querySelector('#mode').value})});const j=await r.json();if(!r.ok)throw new Error(j.error?.message||'Request failed');const warnings=(j.warnings||[]).map(x=>`<div class="warning">${esc(x)}</div>`).join('');const cards=(j.evidence||[]).map(x=>{const channel=Object.entries(x.channel_scores||{}).map(([name,value])=>`${esc(name)} ${Number(value).toFixed(3)}`).join(' · ');return `<details ${x.rank===1?'open':''}><summary>${esc(x.evidence_id)} · ${esc(x.source_title||x.source_id)} · score ${Number(x.score).toFixed(3)}</summary><div class="citation">${esc(x.citation)}</div><div class="scores">${channel||'No channel scores'}</div><pre>${esc(x.content)}</pre></details>`;}).join('');out.innerHTML=warnings+(cards||'<div class="panel">No evidence returned.</div>');statusEl.textContent=j.degraded?`Completed with degradation: ${(j.degraded_components||[]).join(', ')}`:'Completed';}catch(err){out.innerHTML=`<div class="panel warning">${esc(err.message)}</div>`;statusEl.textContent='Failed';}finally{submit.disabled=false;}});
+readiness();
+</script>
+</body>
+</html>

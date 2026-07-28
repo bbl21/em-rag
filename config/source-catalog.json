@@ -1,0 +1,41 @@
+{
+  "allowed_hosts": ["doi.org", "arxiv.org", "ocw.mit.edu", "www.itu.int"],
+  "sources": [
+    {
+      "source_id": "ellingson_em_vol1",
+      "url": "https://doi.org/10.21061/electromagnetics-vol-1",
+      "filename": "electromagnetics-vol-1-latex",
+      "sha256": "",
+      "max_bytes": 1,
+      "acquisition_mode": "manual_download",
+      "file_type": "file"
+    },
+    {
+      "source_id": "modern_antennas_microwave_circuits",
+      "url": "https://arxiv.org/abs/1911.08484",
+      "filename": "Modern_Antennas_Microwave_Circuits_Jan_2022_arxiv_latex",
+      "sha256": "",
+      "max_bytes": 1,
+      "acquisition_mode": "manual_download",
+      "file_type": "file"
+    },
+    {
+      "source_id": "mit_em_applications",
+      "url": "https://ocw.mit.edu/courses/6-013-electromagnetics-and-applications-spring-2009/resources/readings/",
+      "filename": "Electromagnetics-and-Applications.pdf",
+      "sha256": "",
+      "max_bytes": 1,
+      "acquisition_mode": "manual_download",
+      "file_type": "pdf"
+    },
+    {
+      "source_id": "itu_r_p1411_13",
+      "url": "https://www.itu.int/rec/R-REC-P.1411-13-202509-I/en",
+      "filename": "R-REC-P.1411-13-202509-I!!PDF-E.pdf",
+      "sha256": "",
+      "max_bytes": 1,
+      "acquisition_mode": "manual_download",
+      "file_type": "pdf"
+    }
+  ]
+}

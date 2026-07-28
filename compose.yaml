@@ -1,0 +1,55 @@
+services:
+  rag-api:
+    build:
+      context: .
+    image: ghcr.io/${GHCR_OWNER:-local}/em-rag:${EM_RAG_IMAGE_TAG:-latest}
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      EM_RAG_DOCKER_UID: "${EM_RAG_DOCKER_UID:-1000}"
+      EM_RAG_DOCKER_GID: "${EM_RAG_DOCKER_GID:-1000}"
+      EM_RAG_PROJECT_ROOT: /app
+      EM_RAG_ENABLE_VECTOR: "1"
+      EM_RAG_EMBEDDING_BACKEND: "${EM_RAG_EMBEDDING_BACKEND:-local_cpu}"
+    user: "${EM_RAG_DOCKER_UID:-1000}:${EM_RAG_DOCKER_GID:-1000}"
+    ports:
+      - "${EM_RAG_PORT:-8000}:8000"
+    volumes:
+      - ./kb_corpus_build/indexes:/app/kb_corpus_build/indexes:ro
+    restart: unless-stopped
+
+  rag-bootstrap:
+    profiles: ["bootstrap"]
+    build:
+      context: .
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      EM_RAG_DOCKER_UID: "${EM_RAG_DOCKER_UID:-1000}"
+      EM_RAG_DOCKER_GID: "${EM_RAG_DOCKER_GID:-1000}"
+      EM_RAG_PROJECT_ROOT: /app
+      EM_RAG_ENABLE_VECTOR: "1"
+      EM_RAG_EMBEDDING_BACKEND: "${EM_RAG_EMBEDDING_BACKEND:-local_cpu}"
+    user: "${EM_RAG_DOCKER_UID:-1000}:${EM_RAG_DOCKER_GID:-1000}"
+    command: ["python", "-m", "em_rag.bootstrap", "build", "--project-root", "/app"]
+    volumes:
+      - ./reference:/app/reference:ro
+      - ./kb_corpus_build:/app/kb_corpus_build
+
+  rag-download:
+    profiles: ["rag-download"]
+    build:
+      context: .
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      EM_RAG_DOCKER_UID: "${EM_RAG_DOCKER_UID:-1000}"
+      EM_RAG_DOCKER_GID: "${EM_RAG_DOCKER_GID:-1000}"
+      EM_RAG_PROJECT_ROOT: /app
+    user: "${EM_RAG_DOCKER_UID:-1000}:${EM_RAG_DOCKER_GID:-1000}"
+    command: ["python", "-m", "em_rag.bootstrap", "acquire-sources", "--project-root", "/app"]
+    volumes:
+      - ./reference:/app/reference

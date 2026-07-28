@@ -1,0 +1,5 @@
+# Optional retrieval dependencies for BM25/vector indexes.
+rank-bm25>=0.2.2
+bm25s>=0.2.0
+sentence-transformers>=2.7.0
+faiss-cpu>=1.8.0

@@ -1,0 +1,28 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  source-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/export_release_tree.py --output dist/em-rag-release
+      - run: python -m pip install ".[runtime,test]"
+      - run: python -m em_rag.bootstrap prepare-model --project-root .
+      - run: python -m unittest discover -s tests/product -p "test_*.py" -v
+      - run: python scripts/check_release_tree.py --project-root dist/em-rag-release --all-files
+      - run: zip -r dist/em-rag-source.zip dist/em-rag-release
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: gh release create "$TAG_NAME" dist/em-rag-source.zip --generate-notes --title "EM RAG $TAG_NAME"

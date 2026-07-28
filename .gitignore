@@ -1,0 +1,34 @@
+# Local/private inputs and secrets.
+reference/
+.env
+.env.*
+!.env.example
+
+# Generated knowledge-base artifacts stay local.
+kb_corpus_build/audit/
+kb_corpus_build/corpus/
+kb_corpus_build/indexes/
+kb_corpus_build/intermediate/
+kb_corpus_build/logs/
+kb_corpus_build/metadata/
+kb_corpus_build/rag/
+kb_corpus_build/reports/
+kb_corpus_build/eval/retrieval_quality_v2/judgments/
+kb_corpus_build/eval/retrieval_quality_v2/qrels/
+kb_corpus_build/eval/retrieval_quality_v2/runs/
+kb_corpus_build/eval/retrieval_quality_v2/reports/legacy_baseline/
+
+# Models, environments, and runtime caches.
+kb_corpus_build/.cache/
+kb_corpus_build/.venv*/
+.em-rag-demo/
+.pytest_cache/
+**/__pycache__/
+**/*.py[cod]
+*.egg-info/
+
+# Local packaging and editor noise.
+dist/
+build/
+.DS_Store
+Thumbs.db
