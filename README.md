@@ -212,8 +212,7 @@ python scripts/check_release_tree.py --project-root dist/em-rag-release --all-fi
 ```
 
 GitHub Actions runs the same source-release checks, including pinned-model
-preparation and a fresh demo end-to-end test. Docker and Compose remain optional
-development material; they are not a source-release gate.
+preparation and a fresh demo end-to-end test. Docker and Compose remain optional development material; they are not a source-release gate.
 
 Further reading:
 
